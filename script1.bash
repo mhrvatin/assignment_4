@@ -49,8 +49,8 @@ curlargs="-s -S -k"
 output="$($curl $curlargs $rvmhttp)"
 anchor_element=""
 
-$(rm anchors)
-$(rm links_database)
+
+
 
 while read line ; do
   if grep -q "<a" <<< $line ; then
@@ -64,8 +64,10 @@ while read line ; do
   fi
 done <<< "$output"
 
-# TODO fix sorting!
+
 $(sort links_database | uniq >> links_sorted)
 $(rm links_database)
 $(mv links_sorted links_database)
-#echo $(cat links_database)
+
+#TODO: script1.bash must resolve relative paths. (Fix dotdot function). "How do we expand?"
+#TODO: script1.bash must remove arguments from links (the question-mark and anything that follows) to only record the paths.   
