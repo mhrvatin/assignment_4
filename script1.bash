@@ -65,5 +65,7 @@ while read line ; do
 done <<< "$output"
 
 # TODO fix sorting!
-#$(sort links_database | uniq -u)
-echo $(cat links_database)
+$(sort links_database | uniq >> links_sorted)
+$(rm links_database)
+$(mv links_sorted links_database)
+#echo $(cat links_database)
