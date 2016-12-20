@@ -8,17 +8,17 @@ while read line ; do
   domain=$(echo $line | awk '{print $3}')
   path=$(echo $line | awk '{print $4}')
 
-  if grep -q "$domain $path" links_visited ; then
-    echo "already visited link: $domain $path"
-  else
-    echo "DOMAIN: $domain"
-    echo "PATH: $path"
+  
+  grep -q "$domain $path" links_visited
+  if [[ $? != 0 ]]  ; then
+    #echo "DOMAIN: $domain"
+    #echo "PATH: $path"
     ./script1.bash "$domain" "$path" >> links_db2
     
     $(echo $domain $path >> links_visited)
 
     $(sort links_db2 | uniq >> links_sorted)
     $(rm links_db2)
-    $(mv links_sorted links_db2)
+    $(mv links_sorted result)
   fi
 done < links_db2
