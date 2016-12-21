@@ -1,8 +1,10 @@
 #!/bin/bash
 
 function clean_up() {
-  $(rm anchors)
-  $(rm links_db1)
+  #rm -f anchors
+  #rm -f links_db1
+  echo "" > anchors
+  echo "" > links_db1
 }
 
 function resolve_relative_paths() {
@@ -11,7 +13,7 @@ function resolve_relative_paths() {
 
   while [[ $anchor_element == "../"* ]] ; do 
     _source_path=$(echo "$_source_path" | sed -e 's!\(.*/\).*/!\1!')
-    anchor_element=$(echo $anchor_element | sed -e 's!\.\./\(.*\)!\1!')
+    anchor_element=$(echo "$anchor_element" | sed -e 's!\.\./\(.*\)!\1!')
   done
 
   if [[ $target_path != $_source_path ]] ; then
@@ -20,19 +22,12 @@ function resolve_relative_paths() {
 }
 
 function printLinks() {
+  anchor_element="$1"
   resolve_relative_paths
-  local full_output="$2 $3"
 
-	if [[ $1 != *"http"* ]] ; then
-    local external_domain="$2"
-
-    full_output+=" $external_domain $anchor_element"
-  else
-    #TODO parse external domain from string
-    external_domain="" 
+	if [[ $anchor_element != *"http"* ]] ; then
+    echo "$2 $3 $2 $anchor_element" >> links_db1
   fi
-
-  $(echo "$full_output" >> links_db1)
 }
 
 source_domain=$1
@@ -41,25 +36,28 @@ curl='/usr/bin/curl'
 rvmhttp="$source_domain$source_path"
 curlargs="-s -S -k"
 output="$($curl $curlargs $rvmhttp)"
+touch anchors
+touch links_db1
+#clean_up
 
 while read line ; do
   if grep -q "<a" <<< $line ; then
     if grep -q "href" <<< $line ; then
-      anchor_element=$(echo "$line" | sed 's/.*"\([^"]*\)".*/\1/')
-      $(echo "$anchor_element" >> anchors)
+      raw_anchor_element=$(echo "$line" | grep -o 'href="\([^"]*\)"')
+      anchor_element=$(echo "$raw_anchor_element" | sed 's!.*"\([^"]*\)".*!\1!')
 
-		if [[ $anchor_element != mailto*  ]] ; then	# TODO TEMPORARY SOLUTION TO GET RID OF MAILTO
-			printLinks $anchor_element $source_domain $source_path     
-		fi	
+      echo "$anchor_element" >> anchors
     fi
   fi
 done <<< "$output"
 
-$(sort links_db1 | uniq >> links_sorted)
-$(rm links_db1)
-$(mv links_sorted links_db1)
+tmp=$(grep -v "\(mailto\|ftp\)" anchors)
+while read line ; do
+  printLinks $line $source_domain $source_path
+done <<< "$tmp"
 
-links_db=$(cat links_db1)
-echo "$links_db"
+sort links_db1 | uniq >> links_sorted
+rm -f links_db1
+mv links_sorted links_db1
 
-#clean_up
+cat links_db1
