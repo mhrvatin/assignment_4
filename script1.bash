@@ -9,34 +9,29 @@ function resolve_relative_paths() {
   local target_path=$(echo "$anchor_element" | sed -e 's!\(/.*/\).*!\1!')
   local _source_path=$(echo "$source_path" | sed -e 's!\(/.*/\).*!\1!')
 
-  #echo "target_path $target_path"
-  #echo "_source_path $_source_path"
-  #echo "anchor_element $anchor_element"
-
   while [[ $anchor_element == "../"* ]] ; do 
-    #echo "../ exists"
     _source_path=$(echo "$_source_path" | sed -e 's!\(.*/\).*/!\1!')
     anchor_element=$(echo "$anchor_element" | sed -e 's!\.\./\(.*\)!\1!')
   done
 
   if [[ $target_path != $_source_path ]] ; then
-    #echo "target path != _source_path"
     if [[ $target_path != "/"* ]] ; then
-      #echo "target_path != /*"
       anchor_element="$_source_path$anchor_element"
     fi
   fi
-
-  #echo "--------------------------------------"
 }
 
 function printLinks() {
   anchor_element="$1"
-  resolve_relative_paths
 
-	if [[ $anchor_element != *"http"* ]] ; then
-    echo "$2 $3 $2 $anchor_element" >> links_db1
+	if [[ $anchor_element == http* ]] ; then
+    anchor_element=$(echo "$anchor_element" | sed -e 's!.*://\([^/]*\)/.*!\1!')
+    anchor_element+=" /"
+  else
+    resolve_relative_paths
   fi
+
+  echo "$2 $3 $2 $anchor_element" >> links_db1
 }
 
 source_domain=$1
@@ -53,10 +48,6 @@ while read line ; do
   if grep -q "<a href" <<< $line ; then
     raw_anchor_element=$(echo "$line" | grep -o '<a href="\([^"]*\)"')
     anchor_element=$(echo "$raw_anchor_element" | sed 's!.*"\([^"]*\)".*!\1!')
-    #echo "r_ae $raw_anchor_element"
-    #echo "-----------------------------"
-    #echo "ae $anchor_element"
-    #echo "-----------------------------"
 
     echo "$anchor_element" >> anchors
   fi

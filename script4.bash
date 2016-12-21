@@ -13,13 +13,7 @@ while read line ; do
     if [[ $? != 0 ]]  ; then
       if [[ $path != *"private"* ]] ; then
         $(./script1.bash "$domain" "$path" >> links_db2)
-        cat links_db2 >> log
 
-        #echo "----------------------------------" >> log
-        #echo "DOMAIN: $domain" >> log
-        #echo "PATH:   $path" >> log
-        #echo "LINE:   $line" >> log
-        #echo "----------------------------------" >> log
         echo $domain $path >> links_visited
       fi
     fi
